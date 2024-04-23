@@ -151,7 +151,12 @@ export default function TaskForm({
     <motion.form
       initial={{ height: 0, opacity: 0 }}
       animate={{ height: showForm ? "100%" : 0, opacity: showForm ? 1 : 0 }}
-      transition={{ duration: 0.3 }}
+      transition={{
+        duration: 0.3,
+        type: "spring",
+        stiffness: 200,
+        damping: 10,
+      }}
       onSubmit={saveTask}
       className="p-4 rounded-xl shadow-md flex flex-col gap-y-4"
     >
@@ -260,17 +265,29 @@ export default function TaskForm({
       ) : (
         <div className="flex justify-end items-center gap-3">
           {editing && (
-            <Button
-              type="button"
-              variant={isAuthenticated ? "secondary" : "disabled"}
-              text="Delete"
-              onClick={deleteTask}
-            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0 }}
+              animate={{ opacity: showForm ? 1 : 0, scale: showForm ? 1 : 0 }}
+              transition={{ delay: 2 }}
+            >
+              <Button
+                type="button"
+                variant={isAuthenticated ? "secondary" : "disabled"}
+                text="Delete"
+                onClick={deleteTask}
+              />
+            </motion.div>
           )}
-          <Button
-            variant={isAuthenticated ? "primary" : "disabled"}
-            text="Save"
-          />
+          <motion.div
+            initial={{ opacity: 0, scale: 0 }}
+            animate={{ opacity: showForm ? 1 : 0, scale: showForm ? 1 : 0 }}
+            transition={{ delay: 2 }}
+          >
+            <Button
+              variant={isAuthenticated ? "primary" : "disabled"}
+              text="Save"
+            />
+          </motion.div>
         </div>
       )}
     </motion.form>
