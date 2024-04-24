@@ -13,7 +13,7 @@ export default function TaskProgress({
   const [showForm, setShowForm] = React.useState<boolean>(false);
 
   return (
-    <div className="flex-1 p-4 rounded-xl">
+    <div className="flex-1 rounded-xl">
       <div>
         <div className="flex justify-between mb-3">
           <h1 className="font-bold first-letter:uppercase">{progress}</h1>

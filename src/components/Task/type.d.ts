@@ -20,6 +20,8 @@ export type TaskBoardProps = {
   onDragStart: (event: DragStartEvent) => void;
   onDragOver: (event: DragOverEvent) => void;
   onDragEnd: (event: DragEndEvent) => void;
+  selectedDate: string;
+  setSelectedDate: React.Dispatch<React.SetStateAction<string>>;
 };
 
 export type TaskProgressProps = {
@@ -31,6 +33,12 @@ export type TaskState = {
   backlog: Task[];
   ongoing: Task[];
   done: Task[];
+};
+
+export type TaskLoadingState = {
+  backlog: boolean;
+  ongoing: boolean;
+  done: boolean;
 };
 
 export type TaskDroppable = {

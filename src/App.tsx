@@ -17,8 +17,9 @@ import { arrayMove, insertAtIndex, removeAtIndex } from "./utils/array";
 import TaskBoard from "./components/Task/TaskBoard";
 import TaskDroppable from "./components/Task/TaskDroppable";
 import TaskItem from "./components/Task/TaskItem";
+import TaskLoading from "./components/Task/TaskLoading";
 
-import { Task, TaskState } from "./components/Task/type";
+import { Task, TaskLoadingState, TaskState } from "./components/Task/type";
 import { TaskContext } from "./context/Task/TaskContext";
 import { AuthContext } from "./context/Auth/AuthContext";
 
@@ -28,11 +29,17 @@ export default function App() {
   const [activeItem, setActiveItem] = React.useState<Task | null>(null);
   const [isFetching, setIsFetching] = React.useState<boolean>(false);
   const [isDragEnd, setIsDragEnd] = React.useState<boolean>(false);
-  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-  const API_BASE_URL_USER = import.meta.env.VITE_API_BASE_URL_USER;
-
+  const [isLoading, setIsLoading] = React.useState<TaskLoadingState>({
+    backlog: false,
+    ongoing: false,
+    done: false,
+  });
   const date = new Date();
   const currentDate = date.toISOString().split("T")[0];
+  const [selectedDate, setSelectedDate] = React.useState<string>(currentDate);
+
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+  const API_BASE_URL_USER = import.meta.env.VITE_API_BASE_URL_USER;
 
   React.useEffect(() => {
     const sessionString = sessionStorage.getItem("session");
@@ -58,44 +65,65 @@ export default function App() {
   }, [API_BASE_URL_USER, setIsAuthenticated]);
 
   React.useEffect(() => {
+    setIsLoading((prev) => ({ ...prev, backlog: true }));
     const getBacklogTasks = async () => {
-      const response = await axios.get(
-        API_BASE_URL + `/search?status=*backlog*&createdAt=${currentDate}`
-      );
+      try {
+        const response = await axios.get(
+          API_BASE_URL + `/search?status=*backlog*&createdAt=${selectedDate}`
+        );
 
-      if (response.status == 200) {
-        setItems((prevItems) => ({ ...prevItems, backlog: response.data }));
+        if (response.status == 200) {
+          setItems((prevItems) => ({ ...prevItems, backlog: response.data }));
+        }
+      } catch (error) {
+        console.log(error);
+      } finally {
+        setIsLoading((prev) => ({ ...prev, backlog: false }));
       }
     };
 
     getBacklogTasks();
-  }, [API_BASE_URL, setItems, currentDate]);
+  }, [API_BASE_URL, setItems, selectedDate]);
 
   React.useEffect(() => {
     const getOngoingTasks = async () => {
-      const response = await axios.get(
-        API_BASE_URL + `/search?status=*ongoing*&createdAt=${currentDate}`
-      );
-      if (response.status == 200) {
-        setItems((prevItems) => ({ ...prevItems, ongoing: response.data }));
+      setIsLoading((prev) => ({ ...prev, ongoing: true }));
+      try {
+        const response = await axios.get(
+          API_BASE_URL + `/search?status=*ongoing*&createdAt=${selectedDate}`
+        );
+        if (response.status == 200) {
+          setItems((prevItems) => ({ ...prevItems, ongoing: response.data }));
+        }
+      } catch (error) {
+        console.log(error);
+      } finally {
+        setIsLoading((prev) => ({ ...prev, ongoing: false }));
       }
     };
 
     getOngoingTasks();
-  }, [API_BASE_URL, setItems, currentDate]);
+  }, [API_BASE_URL, setItems, selectedDate]);
 
   React.useEffect(() => {
     const getDoneTasks = async () => {
-      const response = await axios.get(
-        API_BASE_URL + `/search?status=*done*&createdAt=${currentDate}`
-      );
-      if (response.status == 200) {
-        setItems((prevItems) => ({ ...prevItems, done: response.data }));
+      setIsLoading((prev) => ({ ...prev, done: true }));
+      try {
+        const response = await axios.get(
+          API_BASE_URL + `/search?status=*done*&createdAt=${selectedDate}`
+        );
+        if (response.status == 200) {
+          setItems((prevItems) => ({ ...prevItems, done: response.data }));
+        }
+      } catch (error) {
+        console.log(error);
+      } finally {
+        setIsLoading((prev) => ({ ...prev, done: false }));
       }
     };
 
     getDoneTasks();
-  }, [API_BASE_URL, setItems, currentDate]);
+  }, [API_BASE_URL, setItems, selectedDate]);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -152,7 +180,7 @@ export default function App() {
       try {
         await axios.delete(
           API_BASE_URL +
-            `/search?status=*${overContainer}*&createdAt=${currentDate}`
+            `/search?status=*${overContainer}*&createdAt=${selectedDate}`
         );
         await axios.delete(API_BASE_URL + `/id/${activeItem?.id}`);
         await axios.post(
@@ -224,7 +252,7 @@ export default function App() {
           console.log("end1");
           await axios.delete(
             API_BASE_URL +
-              `/search?status=*${overContainer}*&createdAt=${currentDate}`
+              `/search?status=*${overContainer}*&createdAt=${selectedDate}`
           );
           await axios.delete(API_BASE_URL + `/id/*${activeItem?.id}*`);
           await axios.post(API_BASE_URL, newItems[activeContainer]);
@@ -251,7 +279,7 @@ export default function App() {
           console.log("end2");
           const responseTasks = await axios.get(
             API_BASE_URL +
-              `/search?status=*${overContainer}*&createdAt=${currentDate}`
+              `/search?status=*${overContainer}*&createdAt=${selectedDate}`
           );
           if (responseTasks.data.length == 0) {
             await axios.delete(API_BASE_URL + `/id/*${currentActiveItem?.id}*`);
@@ -290,8 +318,19 @@ export default function App() {
         onDragEnd={handleDragEnd}
         onDragOver={handleDragOver}
         collisionDetection={closestCorners}
+        selectedDate={selectedDate}
+        setSelectedDate={setSelectedDate}
       >
         {Object.keys(items).map((progress) => {
+          if (isLoading[progress as keyof TaskState])
+            return (
+              <div key={progress} className="flex flex-col gap-y-4">
+                <TaskLoading />
+                <TaskLoading />
+                <TaskLoading />
+              </div>
+            );
+
           return (
             <TaskDroppable
               key={progress}

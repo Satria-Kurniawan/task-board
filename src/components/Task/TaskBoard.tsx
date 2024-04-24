@@ -6,6 +6,7 @@ import toast from "react-hot-toast";
 import Modal from "../ui/Modal/Modal";
 import Button from "../ui/Button/Button";
 import TextInput from "../ui/TextInput/TextInput";
+import DateInput from "../ui/DateInput/DateInput";
 
 import { AuthContext } from "../../context/Auth/AuthContext";
 import { TaskBoardProps } from "./type";
@@ -17,12 +18,16 @@ export default function TaskBoard({
   onDragStart,
   onDragOver,
   onDragEnd,
+  selectedDate,
+  setSelectedDate,
 }: TaskBoardProps) {
   const { isAuthenticated, setIsAuthenticated } = React.useContext(AuthContext);
   const [isFetching, setIsFetching] = React.useState<boolean>(false);
   const [showModal, setShowModal] = React.useState<boolean>(false);
   const [password, setPassword] = React.useState<string>("");
   const [error, setError] = React.useState<string>("");
+
+  console.log(selectedDate);
 
   const API_BASE_URL_USER = import.meta.env.VITE_API_BASE_URL_USER;
 
@@ -90,7 +95,13 @@ export default function TaskBoard({
           <p>The task board to keep track of your tasks.</p>
         </div>
         {isAuthenticated ? (
-          <span className="font-semibold">Edit Mode Activated</span>
+          <div>
+            <Button
+              variant="primary"
+              text="Edit Mode Activated"
+              className="pointer-events-none"
+            />
+          </div>
         ) : (
           <div>
             <Button
@@ -102,7 +113,16 @@ export default function TaskBoard({
         )}
       </header>
       <br />
+
+      <div className="w-fit ml-auto">
+        <DateInput
+          value={selectedDate}
+          onChange={(event) => setSelectedDate(event.target.value)}
+        />
+      </div>
+
       <br />
+
       <section className="grid lg:grid-cols-3 grid-cols-1 lg:gap-10 gap-5">
         <DndContext
           sensors={sensors}
