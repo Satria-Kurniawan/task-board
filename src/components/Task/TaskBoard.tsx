@@ -27,8 +27,6 @@ export default function TaskBoard({
   const [password, setPassword] = React.useState<string>("");
   const [error, setError] = React.useState<string>("");
 
-  console.log(selectedDate);
-
   const API_BASE_URL_USER = import.meta.env.VITE_API_BASE_URL_USER;
 
   React.useEffect(() => {

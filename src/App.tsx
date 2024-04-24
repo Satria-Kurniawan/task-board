@@ -22,6 +22,7 @@ import TaskLoading from "./components/Task/TaskLoading";
 import { Task, TaskLoadingState, TaskState } from "./components/Task/type";
 import { TaskContext } from "./context/Task/TaskContext";
 import { AuthContext } from "./context/Auth/AuthContext";
+import toast from "react-hot-toast";
 
 export default function App() {
   const { isAuthenticated, setIsAuthenticated } = React.useContext(AuthContext);
@@ -188,10 +189,12 @@ export default function App() {
           newItems[overContainer as keyof TaskState]
         );
       } catch (error) {
+        toast.error("Error saving data.");
         console.log(error);
       } finally {
-        setIsFetching(false);
         setIsDragEnd(false);
+        setIsFetching(false);
+        toast.success("Data saved.");
       }
     }
   };
@@ -248,6 +251,7 @@ export default function App() {
         };
 
         setIsFetching(true);
+
         try {
           console.log("end1");
           await axios.delete(
@@ -257,9 +261,11 @@ export default function App() {
           await axios.delete(API_BASE_URL + `/id/*${activeItem?.id}*`);
           await axios.post(API_BASE_URL, newItems[activeContainer]);
         } catch (error) {
+          toast.error("Error saving data.");
           console.log(error);
         } finally {
           setIsFetching(false);
+          toast.success("Data saved.");
         }
       } else {
         const currentActiveItem = event.active.data.current as Task;
@@ -275,6 +281,7 @@ export default function App() {
         );
 
         setIsFetching(true);
+
         try {
           console.log("end2");
           const responseTasks = await axios.get(
@@ -286,8 +293,10 @@ export default function App() {
             await axios.post(API_BASE_URL, currentActiveItem);
           }
         } catch (error) {
+          toast.error("Error saving data.");
           console.log(error);
         } finally {
+          toast.success("Data saved.");
           setIsFetching(false);
         }
       }
