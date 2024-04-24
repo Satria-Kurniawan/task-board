@@ -14,6 +14,7 @@ import { AuthContext } from "../../context/Auth/AuthContext";
 import { TaskContext } from "../../context/Task/TaskContext";
 import {
   InputPriorityState,
+  InputStatusState,
   InputTypeState,
   TaskFormProps,
   TaskState,
@@ -41,6 +42,11 @@ export default function TaskForm({
     medium: false,
     high: false,
   });
+  const [status, setStatus] = React.useState<InputStatusState>({
+    backlog: progress == "backlog",
+    ongoing: progress == "ongoing",
+    done: progress == "done",
+  });
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
   React.useEffect(() => {
@@ -59,7 +65,13 @@ export default function TaskForm({
       medium: item?.priority == "medium",
       high: item?.priority == "high",
     }));
-  }, [editing, item]);
+    setStatus((priority) => ({
+      ...priority,
+      backlog: item?.status == "backlog",
+      ongoing: item?.status == "ongoing",
+      done: item?.status == "done",
+    }));
+  }, [editing, item, progress]);
 
   const saveTask = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -79,6 +91,14 @@ export default function TaskForm({
         : medium
         ? "medium"
         : high && "high";
+      const { backlog, ongoing, done } = status;
+      const statusCheckedString = backlog
+        ? "backlog"
+        : ongoing
+        ? "ongoing"
+        : done
+        ? "done"
+        : "";
 
       setIsFetching(true);
 
@@ -90,30 +110,49 @@ export default function TaskForm({
           text: activity,
           type: typeCheckedString,
           priority: priorityCheckedString,
-          status: progress,
+          status:
+            statusCheckedString.length > 0 ? statusCheckedString : progress,
           createdAt: formattedDate,
         });
 
-        setItems((prevItems) => ({
-          ...prevItems,
-          [progress]: prevItems[progress as keyof TaskState].map((item) => {
-            if (item.id != response.data[0].id) return item;
-            return { ...item, ...response.data[0] };
-          }),
-        }));
+        if (statusCheckedString.length > 0 && statusCheckedString != progress) {
+          setItems((prevItems) => ({
+            ...prevItems,
+            [progress]: prevItems[progress as keyof TaskState].filter(
+              (item) => {
+                return item.id != response.data[0].id;
+              }
+            ),
+          }));
+          setItems((prevItems) => ({
+            ...prevItems,
+            [statusCheckedString]: [
+              ...prevItems[statusCheckedString as keyof TaskState],
+              response.data[0],
+            ],
+          }));
+        } else {
+          setItems((prevItems) => ({
+            ...prevItems,
+            [progress]: prevItems[progress as keyof TaskState].map((item) => {
+              if (item.id != response.data[0].id) return item;
+              return { ...item, ...response.data[0] };
+            }),
+          }));
+        }
       } else {
         const response = await axios.post(API_BASE_URL, {
           id: uuidv4(),
           text: activity,
           type: typeCheckedString,
           priority: priorityCheckedString,
-          status: progress,
+          status: statusCheckedString ? statusCheckedString : progress,
           createdAt: formattedDate,
         });
         setItems((prevItems) => ({
           ...prevItems,
-          [progress]: [
-            ...prevItems[progress as keyof TaskState],
+          [statusCheckedString]: [
+            ...prevItems[statusCheckedString as keyof TaskState],
             response.data[0],
           ],
         }));
@@ -254,6 +293,48 @@ export default function TaskForm({
                 low: false,
                 medium: false,
                 high: true,
+              }))
+            }
+          />
+        </div>
+      </div>
+
+      <div>
+        <h1 className="font-semibold text-sm mb-2">Progress</h1>
+        <div className="flex gap-x-3">
+          <RadioInput
+            label="Backlog"
+            checked={status.backlog}
+            onClick={() =>
+              setStatus((status) => ({
+                ...status,
+                backlog: true,
+                ongoing: false,
+                done: false,
+              }))
+            }
+          />
+          <RadioInput
+            label="Ongoing"
+            checked={status.ongoing}
+            onClick={() =>
+              setStatus((status) => ({
+                ...status,
+                backlog: false,
+                ongoing: true,
+                done: false,
+              }))
+            }
+          />
+          <RadioInput
+            label="Done"
+            checked={status.done}
+            onClick={() =>
+              setStatus((status) => ({
+                ...status,
+                backlog: false,
+                ongoing: false,
+                done: true,
               }))
             }
           />

@@ -51,6 +51,12 @@ export type InputPriorityState = {
   high: boolean;
 };
 
+export type InputStatusState = {
+  backlog: boolean;
+  ongoing: boolean;
+  done: boolean;
+};
+
 export type TaskFormProps = {
   progress: string;
   showForm?: boolean;
